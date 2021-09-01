@@ -1,5 +1,5 @@
 VERSION 5.00
-Object = "{BDC217C8-ED16-11CD-956C-0000C04E4C0A}#1.1#0"; "tabctl32.ocx"
+Object = "{BDC217C8-ED16-11CD-956C-0000C04E4C0A}#1.1#0"; "TabCtl32.Ocx"
 Begin VB.Form frmMail 
    Caption         =   "VB6Mail"
    ClientHeight    =   5175
@@ -382,50 +382,19 @@ Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = False
+Dim Email_RegEx        As New RegExp
+
 Private Sub Form_Load()
     sCarregaConfig
 End Sub
 
 Private Sub cmdEnviar_Click()
     Dim objEmail As CDO.Message
-    Dim intContador As Integer
     Dim strMsgConfig As String
     
     Screen.MousePointer = vbHourglass
     
-    For intContador = 0 To 3
-        If Trim(txtConfig(intContador).Text) = "" Then
-            strMsgConfig = strMsgConfig & Left(lblConfig(intContador).Caption, Len(lblConfig(intContador).Caption) - 1) & vbNewLine
-        End If
-    Next intContador
-    
-    If "" & strMsgConfig <> "" Then
-        MsgBox "Não foi possível enviar o e-mail. Configurações inválidas: " & vbNewLine & vbNewLine & _
-               strMsgConfig & vbNewLine & "Acesse a aba Configurações e preencha os dados corretamente!", vbOKOnly, "Configuração Inválida!"
-        Screen.MousePointer = vbDefault
-        Exit Sub
-    End If
-    
-    If Trim(txtEnvio(0).Text) = "" Then
-        MsgBox "Destinatário inválido!", vbOKOnly, "Erro!"
-        txtEnvio(0).SetFocus
-        Screen.MousePointer = vbDefault
-        Exit Sub
-    End If
-    
-    If Trim(txtEnvio(1).Text) = "" Then
-        MsgBox "Assunto inválido!", vbOKOnly, "Erro!"
-        txtEnvio(1).SetFocus
-        Screen.MousePointer = vbDefault
-        Exit Sub
-    End If
-    
-    If Trim(txtEnvio(2).Text) = "" Then
-        MsgBox "Digite um corpo do e-mail válido!", vbOKOnly, "Erro!"
-        txtEnvio(2).SetFocus
-        Screen.MousePointer = vbDefault
-        Exit Sub
-    End If
+    If Not fValidaCampos() Then Exit Sub
     
     Set objEmail = New CDO.Message
     
@@ -514,6 +483,91 @@ Private Sub cmdSalvar_Click()
     Set objArquivo = Nothing
     MsgBox "Configuração salva com sucesso!", vbOKOnly, "Salvo!"
 End Sub
+
+Private Function fValidaCampos()
+    Dim intContador As Integer
+    Dim intValidos As Integer
+    Dim intInvalidos As Integer
+    Dim strValido As String
+    Dim strInvalido As String
+    Dim arrEndereco
+    
+    fValidaCampos = False
+    
+    For intContador = 0 To 3
+        If Trim(txtConfig(intContador).Text) = "" Then
+            strMsgConfig = strMsgConfig & Left(lblConfig(intContador).Caption, Len(lblConfig(intContador).Caption) - 1) & vbNewLine
+        End If
+    Next intContador
+    
+    If "" & strMsgConfig <> "" Then
+        MsgBox "Não foi possível enviar o e-mail. Configurações inválidas: " & vbNewLine & vbNewLine & _
+               strMsgConfig & vbNewLine & "Acesse a aba Configurações e preencha os dados corretamente!", vbOKOnly, "Configuração Inválida!"
+        Screen.MousePointer = vbDefault
+        Exit Function
+    End If
+    
+    If Trim(txtEnvio(0).Text) = "" Then
+        MsgBox "Destinatário inválido!", vbOKOnly, "Erro!"
+        txtEnvio(0).SetFocus
+        Screen.MousePointer = vbDefault
+        Exit Function
+    End If
+    
+    If Trim(txtEnvio(1).Text) = "" Then
+        MsgBox "Assunto inválido!", vbOKOnly, "Erro!"
+        txtEnvio(1).SetFocus
+        Screen.MousePointer = vbDefault
+        Exit Function
+    End If
+    
+    If Trim(txtEnvio(2).Text) = "" Then
+        MsgBox "Digite um corpo do e-mail válido!", vbOKOnly, "Erro!"
+        txtEnvio(2).SetFocus
+        Screen.MousePointer = vbDefault
+        Exit Function
+    End If
+    
+    arrEndereco = Split(txtEnvio(0).Text, ";")
+    
+    Email_RegEx.Pattern = strEmail_RegEx
+    
+    For intContador = 0 To UBound(arrEndereco)
+    
+        If Not Email_RegEx.Test(Trim(arrEndereco(intContador))) Then
+            intInvalidos = intInvalidos + 1
+        Else
+            intValidos = intValidos + 1
+        End If
+    Next intContador
+    
+    If intValidos = 0 Then
+        MsgBox "Não foi informado um destinatário válido!", vbOKOnly, "Erro!"
+        txtEnvio(0).SetFocus
+        Exit Function
+    End If
+    
+    If intInvalidos > 0 Then
+        If intInvalidos = 1 Then
+            strInvalido = "Foi informado um destinatário inválido."
+        Else
+            strInvalido = "Foram informados destinatários inválidos."
+        End If
+        
+        If intValidos = 1 Then
+            strValido = strInvalido & vbNewLine & vbNewLine & "Deseja prosseguir com o envio apenas para o destinatário válido?"
+        Else
+            strValido = strInvalido & vbNewLine & vbNewLine & "Deseja prosseguir com o envio apenas para os destinatários válidos?"
+        End If
+    
+        If MsgBox(strValido, vbQuestion + vbYesNo, "Destinatários Inválidos") = vbNo Then
+            Exit Function
+        End If
+        
+    End If
+    
+    fValidaCampos = True
+End Function
 
 Private Sub sCarregaConfig()
     Dim objArquivo      As FileSystemObject

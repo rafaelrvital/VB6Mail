@@ -24,6 +24,8 @@ O sistema realiza o envio de e-mail, utilizando Visual Basic 6 (VB6), através t
 - Envio de e-mail utilizando HTML ou apenas texto
 - Gravação das configurações em arquivo JSON
 - Criptografia da senha gravada
+- Envio para multiplos endereços de e-mail (separados por ";")
+- Validação de endereço de e-mail
 
 <br>
 
